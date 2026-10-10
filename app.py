@@ -39,7 +39,7 @@ def delete_task(task_id):
 
 @app.route("/tasks/search", methods=["GET"])
 def search_tasks():
-q = request.args.get("q", "")
+    q = request.args.get("q", "")
     return jsonify([t for t in tasks if q in t["title"]])
     
 if __name__ == "__main__":
