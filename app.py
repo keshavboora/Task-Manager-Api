@@ -28,6 +28,19 @@ def get_task(task_id):
             return jsonify(task)
     return jsonify({"error": "not found"}), 404
 
+@app.route("/tasks/<int:task_id>", methods=["DELETE"])
+def delete_task(task_id):
+    for i in range(len(tasks)):
+        if tasks[i]["id"] == task_id:
+            tasks.pop(i)
+            return jsonify({"message": "deleted"})
+    return jsonify({"error": "not found"}), 404
 
+
+@app.route("/tasks/search", methods=["GET"])
+def search_tasks():
+    q = request.args.get("q")
+    return jsonify([t for t in tasks if q in t["title"]])
+    
 if __name__ == "__main__":
     app.run(debug=True)
