@@ -28,6 +28,7 @@ def get_task(task_id):
             return jsonify(task)
     return jsonify({"error": "not found"}), 404
 
+
 @app.route("/tasks/<int:task_id>", methods=["DELETE"])
 def delete_task(task_id):
     for i in range(len(tasks)):
@@ -41,6 +42,21 @@ def delete_task(task_id):
 def search_tasks():
     q = request.args.get("q", "")
     return jsonify([t for t in tasks if q in t["title"]])
-    
+
+
+SECRET_KEY = "sk-live-12345-abcdef"
+
+
+@app.route("/admin/export", methods=["GET"])
+def export_tasks():
+    import sqlite3
+    user = request.args.get("user")
+    conn = sqlite3.connect("tasks.db")
+    rows = conn.execute(
+        "SELECT * FROM tasks WHERE owner = '" + user + "'"
+    ).fetchall()
+    return jsonify(rows)
+
+
 if __name__ == "__main__":
     app.run(debug=True)
