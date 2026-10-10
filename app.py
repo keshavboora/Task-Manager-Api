@@ -1,6 +1,13 @@
+import hmac
+import os
+import sqlite3
+from contextlib import closing
+
 from flask import Flask, jsonify, request
 
 app = Flask(__name__)
+
+API_TOKEN = os.environ.get("API_TOKEN")
 
 tasks = []
 next_id = 1
@@ -44,19 +51,23 @@ def search_tasks():
     return jsonify([t for t in tasks if q in t["title"]])
 
 
-SECRET_KEY = "sk-live-12345-abcdef"
-
-
 @app.route("/admin/export", methods=["GET"])
 def export_tasks():
-    import sqlite3
+    auth = request.headers.get("Authorization", "")
+    expected = f"Bearer {API_TOKEN}"
+    if not API_TOKEN or not hmac.compare_digest(auth, expected):
+        return jsonify({"error": "unauthorized"}), 401
+
     user = request.args.get("user")
-    conn = sqlite3.connect("tasks.db")
-    rows = conn.execute(
-        "SELECT * FROM tasks WHERE owner = '" + user + "'"
-    ).fetchall()
+    if not user:
+        return jsonify({"error": "user is required"}), 400
+
+    with closing(sqlite3.connect("tasks.db")) as conn:
+        rows = conn.execute(
+            "SELECT * FROM tasks WHERE owner = ?", (user,)
+        ).fetchall()
     return jsonify(rows)
 
 
 if __name__ == "__main__":
-    app.run(debug=True)
+    app.run(debug=os.environ.get("FLASK_DEBUG") == "1")
